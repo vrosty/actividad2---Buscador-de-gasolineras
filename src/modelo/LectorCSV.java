@@ -25,8 +25,8 @@ public class LectorCSV {
                     String cp = campos[3];
                     String direccion = campos[4];
 
-                    double gasolina95 = parsearPrecio(campos[13]);
-                    double gasolina98 = parsearPrecio(campos[14]);
+                    double gasolina95 = parsearPrecio(campos[9]);
+                    double gasolina98 = parsearPrecio(campos[11]);
                     double diesel = parsearPrecio(campos[15]);
                     double dieselPlus = parsearPrecio(campos[16]);
 
