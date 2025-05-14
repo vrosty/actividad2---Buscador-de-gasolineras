@@ -1,87 +1,129 @@
 package presentacion;
 
-import javax.swing.*;
 import logica.GestorGasolineras;
 import modelo.Gasolinera;
 
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 
 public class VentanaPrincipal extends JFrame {
-    private JComboBox<String> comboCombustibles;
     private JComboBox<String> comboProvincias;
-    private JTextArea areaResultados;
+    private JComboBox<String> comboTipos;
+    private JButton btnFiltrar;
+    private JButton btnEstadisticas;
+    private JButton btnMasBarata;
+    private JTextArea txtEstadisticas;
+    private JTable tablaResultados;
+    private DefaultTableModel modeloTabla;
     private GestorGasolineras gestor;
 
     public VentanaPrincipal(GestorGasolineras gestor) {
         this.gestor = gestor;
-        setTitle("Consulta de Gasolineras");
-        setSize(600, 400);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setTitle("Gasolineras - Aplicación");
+        setSize(900, 600);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        inicializarComponentes();
-    }
+        setLayout(new BorderLayout());
 
-    private void inicializarComponentes() {
-        JPanel panelSuperior = new JPanel(new GridLayout(2, 2));
-        comboCombustibles = new JComboBox<>(gestor.obtenerTiposCombustible().toArray(new String[0]));
+        // Panel superior con controles
+        JPanel panelControles = new JPanel(new FlowLayout(FlowLayout.LEFT));
         comboProvincias = new JComboBox<>(gestor.obtenerProvincias().toArray(new String[0]));
+        comboTipos = new JComboBox<>(gestor.obtenerTiposCombustible().toArray(new String[0]));
+        btnFiltrar = new JButton("Filtrar");
+        btnEstadisticas = new JButton("Estadísticas");
+        btnMasBarata = new JButton("Más barata");
 
-        JButton btnFiltrar = new JButton("Filtrar");
-        JButton btnEstadisticas = new JButton("Estadísticas");
-        JButton btnMasBarata = new JButton("Más barata");
+        panelControles.add(new JLabel("Provincia:"));
+        panelControles.add(comboProvincias);
+        panelControles.add(new JLabel("Combustible:"));
+        panelControles.add(comboTipos);
+        panelControles.add(btnFiltrar);
+        panelControles.add(btnEstadisticas);
+        panelControles.add(btnMasBarata);
 
-        panelSuperior.add(new JLabel("Combustible:"));
-        panelSuperior.add(comboCombustibles);
-        panelSuperior.add(new JLabel("Provincia:"));
-        panelSuperior.add(comboProvincias);
+        add(panelControles, BorderLayout.NORTH);
 
-        JPanel panelBotones = new JPanel();
-        panelBotones.add(btnFiltrar);
-        panelBotones.add(btnEstadisticas);
-        panelBotones.add(btnMasBarata);
+        // Tabla de resultados con scroll
+        String[] columnas = {"Provincia", "Municipio", "Localidad", "Dirección", "Precio"};
+        modeloTabla = new DefaultTableModel(columnas, 0);
+        tablaResultados = new JTable(modeloTabla);
+        JScrollPane scrollTabla = new JScrollPane(tablaResultados);
 
-        areaResultados = new JTextArea();
-        areaResultados.setEditable(false);
-        JScrollPane scrollPane = new JScrollPane(areaResultados);
+        // Área de estadísticas con scroll
+        txtEstadisticas = new JTextArea(6, 40);
+        txtEstadisticas.setEditable(false);
+        txtEstadisticas.setLineWrap(true);
+        JScrollPane scrollEstadisticas = new JScrollPane(txtEstadisticas);
 
-        getContentPane().add(panelSuperior, BorderLayout.NORTH);
-        getContentPane().add(panelBotones, BorderLayout.CENTER);
-        getContentPane().add(scrollPane, BorderLayout.SOUTH);
+        // Panel central con tabla y estadísticas
+        JPanel panelCentro = new JPanel();
+        panelCentro.setLayout(new BoxLayout(panelCentro, BoxLayout.Y_AXIS));
+        panelCentro.add(scrollTabla);
+        panelCentro.add(Box.createVerticalStrut(10));
+        panelCentro.add(scrollEstadisticas);
 
-        btnFiltrar.addActionListener(e -> {
-            String combustible = comboCombustibles.getSelectedItem().toString();
-            String provincia = comboProvincias.getSelectedItem().toString();
-            List<Gasolinera> lista = gestor.filtrarGasolineras(combustible, provincia);
-            mostrarGasolineras(lista);
+        add(panelCentro, BorderLayout.CENTER);
+
+        // Acción botón Filtrar
+        btnFiltrar.addActionListener((ActionEvent e) -> {
+            mostrarResultadosFiltrados();
         });
 
-        btnEstadisticas.addActionListener(e -> {
-            String combustible = comboCombustibles.getSelectedItem().toString();
-            String provincia = comboProvincias.getSelectedItem().toString();
-            List<Gasolinera> lista = gestor.filtrarGasolineras(combustible, provincia);
-            areaResultados.setText(gestor.obtenerEstadisticas(lista, combustible));
+        // Acción botón Estadísticas
+        btnEstadisticas.addActionListener((ActionEvent e) -> {
+            mostrarEstadisticas();
         });
 
-        btnMasBarata.addActionListener(e -> {
-            String combustible = comboCombustibles.getSelectedItem().toString();
-            String provincia = comboProvincias.getSelectedItem().toString();
-            Gasolinera g = gestor.obtenerGasolineraMasBarata(combustible, provincia);
-            if (g != null) {
-                areaResultados.setText("Gasolinera más barata:\n" + g.toString());
-            } else {
-                areaResultados.setText("No se encontraron resultados.");
-            }
+        // Acción botón Más barata
+        btnMasBarata.addActionListener((ActionEvent e) -> {
+            mostrarGasolineraMasBarata();
         });
     }
 
-    private void mostrarGasolineras(List<Gasolinera> gasolineras) {
-        StringBuilder sb = new StringBuilder();
-        for (Gasolinera g : gasolineras) {
-            sb.append(g.toString()).append("\n");
+    private void mostrarResultadosFiltrados() {
+        String provincia = (String) comboProvincias.getSelectedItem();
+        String tipo = (String) comboTipos.getSelectedItem();
+        List<Gasolinera> filtradas = gestor.filtrarGasolineras(tipo, provincia);
+
+        modeloTabla.setRowCount(0);
+        for (Gasolinera g : filtradas) {
+            modeloTabla.addRow(new Object[]{
+                    g.getProvincia(), g.getMunicipio(), g.getLocalidad(), g.getDireccion(),
+                    g.getPrecioCombustible(tipo)
+            });
         }
-        areaResultados.setText(sb.toString());
+
+        txtEstadisticas.setText("Se han encontrado " + filtradas.size() + " resultados.");
+    }
+
+    private void mostrarEstadisticas() {
+        String provincia = (String) comboProvincias.getSelectedItem();
+        String tipo = (String) comboTipos.getSelectedItem();
+        List<Gasolinera> filtradas = gestor.filtrarGasolineras(tipo, provincia);
+
+        String stats = gestor.obtenerEstadisticas(filtradas, tipo);
+        txtEstadisticas.setText(stats);
+    }
+
+    private void mostrarGasolineraMasBarata() {
+        String provincia = (String) comboProvincias.getSelectedItem();
+        String tipo = (String) comboTipos.getSelectedItem();
+        Gasolinera barata = gestor.obtenerGasolineraMasBarata(tipo, provincia);
+
+        if (barata != null) {
+            modeloTabla.setRowCount(0);
+            modeloTabla.addRow(new Object[]{
+                    barata.getProvincia(), barata.getMunicipio(), barata.getLocalidad(),
+                    barata.getDireccion(), barata.getPrecioCombustible(tipo)
+            });
+
+            txtEstadisticas.setText("Gasolinera más barata:\n" + barata.getDireccion() +
+                    "\nPrecio: " + barata.getPrecioCombustible(tipo));
+        } else {
+            txtEstadisticas.setText("No se encontraron datos.");
+        }
     }
 }
