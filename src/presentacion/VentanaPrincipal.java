@@ -146,7 +146,7 @@ public class VentanaPrincipal extends JFrame {
         });
     }
 
-    // Método ayudante para validar selección de ComboBox
+    // Metodo ayudante para validar selección de ComboBox
     private String obtenerSeleccionValida(JComboBox<String> comboBox, String descripcionCampo) {
         if (!comboBox.isEnabled() || comboBox.getSelectedItem() == null) {
             throw new IllegalArgumentException("No hay " + descripcionCampo + " disponible o habilitado para seleccionar.");
