@@ -8,6 +8,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
+import java.util.Collections; // Para listas vacías
 
 public class VentanaPrincipal extends JFrame {
     private JComboBox<String> comboProvincias;
@@ -18,11 +19,25 @@ public class VentanaPrincipal extends JFrame {
     private JTextArea txtEstadisticas;
     private JTable tablaResultados;
     private DefaultTableModel modeloTabla;
-    private GestorGasolineras gestor;
+    private transient GestorGasolineras gestor;
 
     public VentanaPrincipal(GestorGasolineras gestor) {
-        this.gestor = gestor;
-        setTitle("Gasolineras - Aplicación");
+        // Validación del gestor
+        if (gestor == null) {
+            JOptionPane.showMessageDialog(null,
+                    "Error crítico: El gestor de datos no está disponible.\nLa aplicación no puede continuar.",
+                    "Error Interno Grave",
+                    JOptionPane.ERROR_MESSAGE);
+            // Considerar cerrar la aplicación o deshabilitar toda la UI.
+            // Por simplicidad, permitimos que continúe, pero la UI podría no funcionar.
+            // System.exit(1); // Opción drástica
+            this.gestor = new GestorGasolineras(Collections.emptyList()); // Gestor "dummy" para evitar NPEs masivos
+            setTitle("Gasolineras - Aplicación (MODO ERROR)");
+        } else {
+            this.gestor = gestor;
+            setTitle("Gasolineras - Aplicación");
+        }
+
         setSize(900, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -30,15 +45,29 @@ public class VentanaPrincipal extends JFrame {
 
         // Panel superior con controles
         JPanel panelControles = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        comboProvincias = new JComboBox<>(gestor.obtenerProvincias().toArray(new String[0]));
-        comboTipos = new JComboBox<>(gestor.obtenerTiposCombustible().toArray(new String[0]));
+
+        List<String> provincias = this.gestor.obtenerProvincias();
+        if (provincias.isEmpty()) {
+            comboProvincias = new JComboBox<>(new String[]{"(Sin provincias)"});
+            comboProvincias.setEnabled(false);
+        } else {
+            comboProvincias = new JComboBox<>(provincias.toArray(new String[0]));
+        }
+
+        List<String> tipos = this.gestor.obtenerTiposCombustible();
+        if (tipos.isEmpty()) { // Aunque GestorGasolineras siempre devuelve 4 tipos
+            comboTipos = new JComboBox<>(new String[]{"(Sin tipos)"});
+            comboTipos.setEnabled(false);
+        } else {
+            comboTipos = new JComboBox<>(tipos.toArray(new String[0]));
+        }
+
         btnFiltrar = new JButton("Filtrar");
         btnFiltrar.setToolTipText("Genera una tabla con el resultado del filtro.");
         btnEstadisticas = new JButton("Estadísticas");
         btnEstadisticas.setToolTipText("Obtiene unas estadísticas basicas sobre los precios.");
         btnMasBarata = new JButton("Más barata");
         btnMasBarata.setToolTipText("Gasolinera más barata para los cirterios de filtrado.");
-
 
         panelControles.add(new JLabel("Provincia:"));
         panelControles.add(comboProvincias);
@@ -62,7 +91,6 @@ public class VentanaPrincipal extends JFrame {
         txtEstadisticas.setLineWrap(true);
         JScrollPane scrollEstadisticas = new JScrollPane(txtEstadisticas);
 
-        // Panel central con tabla y estadísticas
         JPanel panelCentro = new JPanel();
         panelCentro.setLayout(new BoxLayout(panelCentro, BoxLayout.Y_AXIS));
         panelCentro.add(scrollTabla);
@@ -71,63 +99,108 @@ public class VentanaPrincipal extends JFrame {
 
         add(panelCentro, BorderLayout.CENTER);
 
+        // Texto inicial
+        txtEstadisticas.setText("Seleccione criterios y pulse un botón para ver resultados.");
+
         // Acción botón Filtrar
         btnFiltrar.addActionListener((ActionEvent e) -> {
-            mostrarResultadosFiltrados();
+            try {
+                String provincia = obtenerSeleccionValida(comboProvincias, "una provincia");
+                String tipo = obtenerSeleccionValida(comboTipos, "un tipo de combustible");
+                mostrarResultadosFiltrados(provincia, tipo);
+            } catch (IllegalArgumentException iae) {
+                JOptionPane.showMessageDialog(this, iae.getMessage(), "Entrada Inválida", JOptionPane.WARNING_MESSAGE);
+            } catch (Exception ex) { // Captura genérica
+                JOptionPane.showMessageDialog(this, "Ocurrió un error inesperado al filtrar: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                System.err.println("Error en btnFiltrar: " + ex.getMessage());
+                // ex.printStackTrace();
+            }
         });
 
         // Acción botón Estadísticas
         btnEstadisticas.addActionListener((ActionEvent e) -> {
-            mostrarEstadisticas();
+            try {
+                String provincia = obtenerSeleccionValida(comboProvincias, "una provincia");
+                String tipo = obtenerSeleccionValida(comboTipos, "un tipo de combustible");
+                mostrarEstadisticas(provincia, tipo);
+            } catch (IllegalArgumentException iae) {
+                JOptionPane.showMessageDialog(this, iae.getMessage(), "Entrada Inválida", JOptionPane.WARNING_MESSAGE);
+            } catch (Exception ex) { // Captura genérica
+                JOptionPane.showMessageDialog(this, "Ocurrió un error inesperado al obtener estadísticas: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                System.err.println("Error en btnEstadisticas: " + ex.getMessage());
+            }
         });
 
         // Acción botón Más barata
         btnMasBarata.addActionListener((ActionEvent e) -> {
-            mostrarGasolineraMasBarata();
+            try {
+                String provincia = obtenerSeleccionValida(comboProvincias, "una provincia");
+                String tipo = obtenerSeleccionValida(comboTipos, "un tipo de combustible");
+                mostrarGasolineraMasBarata(provincia, tipo);
+            } catch (IllegalArgumentException iae) {
+                JOptionPane.showMessageDialog(this, iae.getMessage(), "Entrada Inválida", JOptionPane.WARNING_MESSAGE);
+            } catch (Exception ex) { // Captura genérica
+                JOptionPane.showMessageDialog(this, "Ocurrió un error inesperado al buscar la más barata: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                System.err.println("Error en btnMasBarata: " + ex.getMessage());
+            }
         });
     }
 
-    private void mostrarResultadosFiltrados() {
-        String provincia = (String) comboProvincias.getSelectedItem();
-        String tipo = (String) comboTipos.getSelectedItem();
-        List<Gasolinera> filtradas = gestor.filtrarGasolineras(tipo, provincia);
-
-        modeloTabla.setRowCount(0);
-        for (Gasolinera g : filtradas) {
-            modeloTabla.addRow(new Object[]{
-                    g.getProvincia(), g.getMunicipio(), g.getLocalidad(), g.getDireccion(),
-                    g.getPrecioCombustible(tipo)
-            });
+    // Método ayudante para validar selección de ComboBox
+    private String obtenerSeleccionValida(JComboBox<String> comboBox, String descripcionCampo) {
+        if (!comboBox.isEnabled() || comboBox.getSelectedItem() == null) {
+            throw new IllegalArgumentException("No hay " + descripcionCampo + " disponible o habilitado para seleccionar.");
         }
-
-        txtEstadisticas.setText("Se han encontrado " + filtradas.size() + " resultados.");
+        String seleccion = (String) comboBox.getSelectedItem();
+        if (seleccion.startsWith("(") || seleccion.trim().isEmpty()) { // Para manejar placeholders como "(Sin...)"
+            throw new IllegalArgumentException("Por favor, seleccione " + descripcionCampo + " válido(a).");
+        }
+        return seleccion;
     }
 
-    private void mostrarEstadisticas() {
-        String provincia = (String) comboProvincias.getSelectedItem();
-        String tipo = (String) comboTipos.getSelectedItem();
+
+    private void mostrarResultadosFiltrados(String provincia, String tipo) {
+        // Las validaciones de provincia y tipo ya se hicieron en el listener
+        // y GestorGasolineras también las hace.
         List<Gasolinera> filtradas = gestor.filtrarGasolineras(tipo, provincia);
 
-        String stats = gestor.obtenerEstadisticas(filtradas, tipo);
-        txtEstadisticas.setText(stats);
+        modeloTabla.setRowCount(0); // Limpiar tabla antes de añadir nuevas filas
+        if (filtradas.isEmpty()){
+            txtEstadisticas.setText("No se han encontrado gasolineras para los criterios:\nProvincia: " + provincia + "\nCombustible: " + tipo);
+        } else {
+            for (Gasolinera g : filtradas) {
+                modeloTabla.addRow(new Object[]{
+                        g.getProvincia(), g.getMunicipio(), g.getLocalidad(), g.getDireccion(),
+                        // Formatear precio para mejor visualización, si no es NaN
+                        Double.isNaN(g.getPrecioCombustible(tipo)) ? "N/A" : String.format("%.3f", g.getPrecioCombustible(tipo))
+                });
+            }
+            txtEstadisticas.setText("Se han encontrado " + filtradas.size() + " resultados para:\nProvincia: " + provincia + "\nCombustible: " + tipo);
+        }
     }
 
-    private void mostrarGasolineraMasBarata() {
-        String provincia = (String) comboProvincias.getSelectedItem();
-        String tipo = (String) comboTipos.getSelectedItem();
+    private void mostrarEstadisticas(String provincia, String tipo) {
+        List<Gasolinera> filtradas = gestor.filtrarGasolineras(tipo, provincia); // Reutilizar filtro
+        String stats = gestor.obtenerEstadisticas(filtradas, tipo);
+        txtEstadisticas.setText("Resultados para Provincia: " + provincia + "\n" + stats);
+    }
+
+    private void mostrarGasolineraMasBarata(String provincia, String tipo) {
         Gasolinera barata = gestor.obtenerGasolineraMasBarata(tipo, provincia);
 
+        modeloTabla.setRowCount(0); // Limpiar tabla
         if (barata != null) {
-            modeloTabla.setRowCount(0);
             modeloTabla.addRow(new Object[]{
                     barata.getProvincia(), barata.getMunicipio(), barata.getLocalidad(),
-                    barata.getDireccion(), barata.getPrecioCombustible(tipo)
+                    barata.getDireccion(),
+                    Double.isNaN(barata.getPrecioCombustible(tipo)) ? "N/A" : String.format("%.3f", barata.getPrecioCombustible(tipo))
             });
 
-            txtEstadisticas.setText("Gasolinera más barata:\n" + barata.getDireccion() +
-                    "\nPrecio: " + barata.getPrecioCombustible(tipo));
+            txtEstadisticas.setText("Gasolinera más barata para " + tipo + " en " + provincia + ":\n" +
+                    barata.getDireccion() + ", " + barata.getLocalidad() + "\n" +
+                    "Precio: " + (Double.isNaN(barata.getPrecioCombustible(tipo)) ? "N/A" : String.format("%.3f", barata.getPrecioCombustible(tipo))) + " €");
         } else {
-            txtEstadisticas.setText("No se encontraron datos.");
+            txtEstadisticas.setText("No se encontraron datos de gasolineras para " + tipo + " en " + provincia + ".");
         }
     }
 }
