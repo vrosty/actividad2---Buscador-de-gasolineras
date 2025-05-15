@@ -33,8 +33,12 @@ public class VentanaPrincipal extends JFrame {
         comboProvincias = new JComboBox<>(gestor.obtenerProvincias().toArray(new String[0]));
         comboTipos = new JComboBox<>(gestor.obtenerTiposCombustible().toArray(new String[0]));
         btnFiltrar = new JButton("Filtrar");
+        btnFiltrar.setToolTipText("Genera una tabla con el resultado del filtro.");
         btnEstadisticas = new JButton("Estadísticas");
+        btnEstadisticas.setToolTipText("Obtiene unas estadísticas basicas sobre los precios.");
         btnMasBarata = new JButton("Más barata");
+        btnMasBarata.setToolTipText("Gasolinera más barata para los cirterios de filtrado.");
+
 
         panelControles.add(new JLabel("Provincia:"));
         panelControles.add(comboProvincias);
