@@ -41,31 +41,14 @@ Métodos Públicos:
 
 
 + getProvincia(): String
-
-
 + getMunicipio(): String
-
-
 + getLocalidad(): String
-
-
 + getCp(): String
-
-
 + getDireccion(): String
-
-
 + getGasolina95(): double
-
-
 + getGasolina98(): double
-
-
 + getDiesel(): double
-
-
 + getDieselPlus(): double
-
 
 Propósito: Métodos de acceso para obtener los valores de los atributos correspondientes.
 Retorno: El valor del atributo respectivo.
@@ -80,16 +63,13 @@ Pre-condiciones: Ninguna explícita más allá de la validez del objeto.
 Post-condiciones: El precio del combustible es devuelto sin modificar el estado del objeto.
 + toString(): String
 
-
 Propósito: Devuelve una representación en cadena del objeto Gasolinera, útil para depuración o visualización simple.
 Retorno: Una cadena que incluye la dirección, localidad, provincia y los precios de todos los combustibles. Los precios no disponibles (Double.NaN) se muestran como "N/A".
 
 Clase LectorCSV
 Propósito de la Clase: Proporciona funcionalidad para leer datos de gasolineras desde un archivo CSV y convertirlos en una lista de objetos Gasolinera. Es una clase de utilidad con métodos estáticos.
 
-
 Métodos Públicos Estáticos:
-
 
 + leerGasolineras(rutaArchivo: String): List<Gasolinera>
 Propósito: Lee un archivo CSV que contiene datos de gasolineras y los transforma en una lista de objetos Gasolinera.
@@ -135,10 +115,7 @@ Intenta convertir a double: a. Si contiene un punto (.), usa Double.parseDouble(
 Clase CSVLecturaException
 Propósito de la Clase: Una excepción personalizada que hereda de RuntimeException. Se utiliza para señalar errores específicos ocurridos durante la lectura o procesamiento de un archivo CSV. Al ser RuntimeException, no requiere declaración throws obligatoria, pero indica problemas serios en la operación de lectura.
 
-
 Constructores:
-
-
 + CSVLecturaException(message: String)
 Propósito: Crea una nueva excepción con un mensaje descriptivo.
 Parámetros:
@@ -153,14 +130,11 @@ Paquete logica
 Clase GestorGasolineras
 Propósito de la Clase: Gestiona una colección de objetos Gasolinera. Proporciona funcionalidades para obtener información agregada (como listas de provincias), filtrar gasolineras según criterios, calcular estadísticas de precios y encontrar la gasolinera más barata para un tipo de combustible y provincia específicos.
 
-
 Atributos:
-
 
 - gasolineras: List<Gasolinera>: La lista de objetos Gasolinera que gestiona.
 - df: static final DecimalFormat: Formateador para mostrar precios con tres decimales.
 Constructores:
-
 
 + GestorGasolineras(gasolineras: List<Gasolinera>)
 Propósito: Crea una instancia del gestor con una lista inicial de gasolineras.
@@ -169,21 +143,17 @@ gasolineras: La lista de Gasolinera a gestionar.
 Post-condiciones: El gestor se inicializa con la lista proporcionada. Si la lista es null, se inicializa con una lista vacía y se emite una advertencia a System.err.
 Métodos Públicos:
 
-
 + obtenerProvincias(): List<String>
-
 
 Propósito: Obtiene una lista única, ordenada alfabéticamente, de todas las provincias presentes en la colección de gasolineras.
 Retorno: List<String> de provincias. Devuelve una lista vacía si no hay gasolineras o ninguna tiene información de provincia válida.
 Filtra: Provincias nulas o vacías (isBlank()).
 + obtenerTiposCombustibleDisponibles(): List<String>
 
-
 Propósito: Devuelve una lista predefinida de los tipos de combustible que la aplicación considera disponibles para filtrado y estadísticas.
 Retorno: Una List<String> con los nombres de los tipos de combustible (e.g., "Gasolina95", "Gasolina98", "Diesel", "DieselPlus").
 Nota: Esta lista es actualmente fija y no se deriva dinámicamente de los datos.
 + filtrarGasolineras(tipo: String, provincia: String): List<Gasolinera>
-
 
 Propósito: Filtra la lista de gasolineras basándose en un tipo de combustible y una provincia. Para que una gasolinera sea incluida por tipo de combustible, debe tener un precio válido (mayor que 0 y no NaN) para ese tipo.
 Parámetros:
@@ -196,7 +166,6 @@ Si provincia es válida y no es "todas", filtra por gasolineras cuya provincia c
 Si tipo es válido y no es "todos", normaliza tipo a minúsculas y filtra por gasolineras que tengan un precio positivo y no NaN para ese tipo de combustible.
 Recolecta los resultados en una nueva lista.
 + obtenerEstadisticas(gasolinerasFiltradas: List<Gasolinera>, tipoCombustible: String): String
-
 
 Propósito: Calcula y devuelve estadísticas (cantidad, media, mínimo, máximo) de los precios para un tipoCombustible específico, basándose en una lista de gasolinerasFiltradas previamente.
 Parámetros:
@@ -211,7 +180,6 @@ Normaliza tipoCombustible a minúsculas.
 Usa DoubleSummaryStatistics sobre los precios del tipoCombustible de la lista gasolinerasFiltradas, excluyendo precios no válidos (NaN o &lt;= 0).
 Formatea los resultados (contador, media, mínimo, máximo) en una cadena.
 + obtenerGasolineraMasBarata(tipo: String, provincia: String): Gasolinera
-
 
 Propósito: Encuentra y devuelve la gasolinera con el precio más bajo para un tipo de combustible y provincia específicos.
 Parámetros:
@@ -231,10 +199,7 @@ Paquete presentacion
 Clase VentanaPrincipal
 Propósito de la Clase: Representa la interfaz gráfica de usuario (GUI) principal de la aplicación. Permite al usuario seleccionar una provincia y un tipo de combustible para filtrar gasolineras, ver estadísticas y encontrar la más barata. Extiende JFrame.
 
-
 Atributos Principales (Swing y Lógica):
-
-
 - comboProvincias: JComboBox<String>: desplegable para seleccionar la provincia.
 - comboTipos: JComboBox<String>: desplegable para seleccionar el tipo de combustible.
 - btnFiltrar: JButton: botón para ejecutar la acción de filtrado.
@@ -246,15 +211,13 @@ Atributos Principales (Swing y Lógica):
 - gestor: GestorGasolineras
 Constructores:
 
-
 + VentanaPrincipal(gestor: GestorGasolineras)
 Propósito: Inicializa la ventana principal, configura sus componentes y establece los manejadores de eventos.
 Parámetros:
 gestor: La instancia de GestorGasolineras que proporcionará los datos y la lógica de negocio.
 Post-condiciones: La ventana está configurada y lista para ser mostrada. Los desplegables de provincias y tipos de combustible se cargan con datos del gestor. Si el gestor es nulo, se muestra un mensaje de error y se usa un gestor "dummy" para evitar NullPointerExceptions, aunque la funcionalidad será limitada.
+
 Métodos Principales (Privados, mayormente manejadores de eventos o helpers de UI):
-
-
 - inicializarComponentes(): Configura y distribuye los componentes Swing en la ventana (paneles, botones, tabla, etc.).
 - cargarProvincias(): Llena comboProvincias con datos de gestor.obtenerProvincias(). Añade una opción "Todas".
 - cargarTiposCombustible(): Llena comboTipos con datos de gestor.obtenerTiposCombustibleDisponibles(). Añade una opción "Todos".
@@ -270,10 +233,7 @@ Métodos Principales (Privados, mayormente manejadores de eventos o helpers de U
 Clase MainApp
 Propósito de la Clase: Contiene el método main que sirve como punto de entrada para la aplicación. Se encarga de configurar el look and feel, permitir al usuario seleccionar el archivo CSV de datos, inicializar las capas de lógica y presentación, y mostrar la ventana principal. También maneja errores globales durante el inicio.
 
-
 Métodos Públicos Estáticos:
-
-
 + main(args: String[])
 Propósito: Inicia la aplicación.
 Parámetros:
